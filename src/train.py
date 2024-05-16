@@ -50,8 +50,8 @@ if __name__ == '__main__':
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(resnet50_model.parameters(), lr = 0.0001)
-    num_epochs = 15
+    num_epochs = 20
 
     trainfunc(resnet50_model,train_data_loader,val_data_loader,optimizer,criterion,num_epochs,f'{disease}_resnet50')
-    trainfuncwandb(resnet50_model,train_data_loader,val_data_loader,optimizer,criterion,num_epochs,f'{disease}_resnet50','fundus')
+    #trainfuncwandb(resnet50_model,train_data_loader,val_data_loader,optimizer,criterion,num_epochs,f'{disease}_resnet50','fundus')
     testfunc(resnet50_model,test_data_loader,criterion)

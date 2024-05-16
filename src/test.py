@@ -12,7 +12,7 @@ if __name__ =='__main__':
     resnet50_model.load_state_dict(torch.load('models\DR_resnet50.pth'))
     criterion = nn.CrossEntropyLoss()
 
-    disease = 'DR'
+    disease = 'MYA'
     test_label = createdf('dataset\Test_Set\RFMiD_Testing_Labels.csv',disease)
     test_dir = 'dataset\Test_Set\Test'
     transform = transforms.Compose([

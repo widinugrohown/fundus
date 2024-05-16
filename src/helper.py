@@ -1,6 +1,7 @@
 import pandas as pd
 import torch
 from sklearn.metrics import f1_score, recall_score, precision_score, confusion_matrix
+import wandb
 
 def createdf(path,label):
     filecsv = pd.read_csv(path)
@@ -80,3 +81,52 @@ def testfunc(model,test_data_loader,criterion):
 
     print(f'Test Loss: {test_loss:.4f}, Test Acc: {test_accuracy:.4f}')
     print(f'F1 Score: {f1:.4f}, Recall: {recall:.4f}, Precision: {precision:.4f}, Specificity: {specificity:.4f}')
+
+
+
+def trainfuncwandb(model, train_data_loader, val_data_loader, optimizer, criterion, num_epochs, modelname, wandb_project_name=None, wandb_run_name=None):
+    # Initialize wandb
+    if wandb_project_name:
+        wandb.init(project=wandb_project_name, name=wandb_run_name)
+        wandb.watch(model)
+
+    for epoch in range(num_epochs):
+        model.train()
+        for images, labels in train_data_loader:
+            images, labels = images.to('cuda'), labels.to('cuda')
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+        # Validation loop
+        model.eval()
+        val_loss = 0.0
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for images, labels in val_data_loader:
+                images, labels = images.to('cuda'), labels.to('cuda')
+                outputs = model(images)
+                _, predicted = torch.max(outputs, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+                val_loss += criterion(outputs, labels).item()
+
+        val_loss /= len(val_data_loader)
+        val_accuracy = correct / total
+
+        # Log metrics to W&B
+        if wandb_project_name:
+            wandb.log({"Train Loss": loss.item(), "Val Loss": val_loss, "Val Acc": val_accuracy})
+
+        print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {loss.item():.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_accuracy:.4f}')
+
+    # Save model
+    torch.save(model.state_dict(), f'models/{modelname}.pth')
+    print("Model saved successfully.")
+
+    # Finish W&B run
+    if wandb_project_name:
+        wandb.finish()
